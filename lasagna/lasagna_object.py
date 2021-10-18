@@ -3,8 +3,14 @@ import sys
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import qApp, QMainWindow
+from lasagna import ingredients, lasagna_axis, lasagna_mainWindow
+from lasagna.io_libs import image_stack_loader
+from lasagna.plugins import plugin_handler
+from lasagna.utils import path_utils, preferences
+from lasagna.utils.lasagna_qt_helper_functions import \
+    find_pyqt_graph_object_name_in_plot_widget
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import QAction, QMainWindow, QMenu, qApp
 
 # lasagna modules
 
@@ -13,17 +19,8 @@ from PyQt5.QtWidgets import qApp, QMainWindow
 # import tifffile  # Used to load tiff and LSM files
 # import nrrd
 
-from lasagna import lasagna_mainWindow, lasagna_axis, ingredients
-from lasagna.io_libs import image_stack_loader
-from lasagna.plugins import plugin_handler
-from lasagna.utils import preferences, path_utils
-from lasagna.utils.lasagna_qt_helper_functions import (
-    find_pyqt_graph_object_name_in_plot_widget,
-)
 
-
-
-class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
+class Lasagna(QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
     def __init__(self, embed_console=False, parent=None):
         """
         Create default values for properties then call initialiseUI to set up main window
@@ -196,7 +193,7 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         # Handle IO plugins. For instance these are the loaders that handle different data types
         # and different loading actions.
 
-        lasagna_path =  os.path.dirname(lasagna_mainWindow.__file__)
+        lasagna_path = os.path.dirname(lasagna_mainWindow.__file__)
         print("Lasagna path is: %s" % lasagna_path)
 
         # directories containing IO modules
@@ -325,7 +322,7 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
             print(p)
             sys.path.append(p)
             dir_name = p.split(os.path.sep)[-1]
-            self.pluginSubMenus[dir_name] = QtGui.QMenu(self.menuPlugins)
+            self.pluginSubMenus[dir_name] = QMenu(self.menuPlugins)
             self.pluginSubMenus[dir_name].setObjectName(dir_name)
             self.pluginSubMenus[dir_name].setTitle(dir_name)
             self.menuPlugins.addAction(self.pluginSubMenus[dir_name].menuAction())
@@ -340,9 +337,10 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         )  # A dictionary where keys are plugin names and values are QActions associated with a plugin
         for plugin in plugins:
             # Get the module name and class
-            plugin_class, plugin_name = plugin_handler.get_plugin_instance_from_file_name(
-                plugin, None
-            )
+            (
+                plugin_class,
+                plugin_name,
+            ) = plugin_handler.get_plugin_instance_from_file_name(plugin, None)
             if plugin_class is None:
                 continue
 
@@ -355,7 +353,7 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
 
             # create an action associated with the plugin and add to the self.pluginActions dictionary
             print(("Creating menu QAction for " + plugin_name))
-            self.pluginActions[plugin_name] = QtGui.QAction(plugin_name, self)
+            self.pluginActions[plugin_name] = QAction(plugin_name, self)
             self.pluginActions[plugin_name].setObjectName(plugin_name)
             self.pluginActions[plugin_name].setCheckable(
                 True
@@ -615,6 +613,7 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         qApp.quit()
         if self.embed_console:
             from prompt_toolkit.application.current import get_app
+
             get_app().exit()
         sys.exit(0)  # without this we get a big horrible error report on the Mac
 
@@ -796,7 +795,6 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
             self.plotImageStackHistogram()  # wipes the histogram
             return
 
-
         self.update_2D_plot_ingredients_in_axes(resetAxes=resetAxes)
 
         # initialize cross hair
@@ -822,7 +820,7 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         if resetAxes:
             self.resetAxes()
 
-    def update_2D_plot_ingredients_in_axes(self,resetAxes=False):
+    def update_2D_plot_ingredients_in_axes(self, resetAxes=False):
         [
             axis.updatePlotItems_2D(
                 self.ingredientList,
@@ -972,7 +970,7 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         """
 
         textBoxVal = self.axisRatioLineEdit_1.text()
-        if len(textBoxVal)==0:
+        if len(textBoxVal) == 0:
             return
 
         self.axes2D[0].view.setAspectLocked(True, float(textBoxVal))
@@ -983,7 +981,7 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         """
 
         textBoxVal = self.axisRatioLineEdit_2.text()
-        if len(textBoxVal)==0:
+        if len(textBoxVal) == 0:
             return
 
         self.axes2D[1].view.setAspectLocked(True, float(textBoxVal))
@@ -994,15 +992,15 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         """
 
         textBoxVal = self.axisRatioLineEdit_3.text()
-        if len(textBoxVal)==0:
+        if len(textBoxVal) == 0:
             return
 
         self.axes2D[2].view.setAspectLocked(True, float(textBoxVal))
 
     def flipAxis_Slot(self, axisToFlip):
         """
-        This slot flips two of the axes at a time in way that makes it look as though the 
-        stack itself was flipped. 
+        This slot flips two of the axes at a time in way that makes it look as though the
+        stack itself was flipped.
         Originally the stack was flipped via the image_stacks.flipAlongAxis method.
         However, this only flips the volume so points traced on the volume:
         https://github.com/SainsburyWellcomeCentre/lasagna/issues/136
@@ -1022,20 +1020,32 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         if not image_stacks:
             return
 
-        #for thisStack in image_stacks:
+        # for thisStack in image_stacks:
         #    thisStack.flipAlongAxis(axisToFlip)
         #
-        #self.initialiseAxes()
+        # self.initialiseAxes()
 
-        if (axisToFlip==0):
-            self.axes2D[1].view.getViewBox().invertX( not(self.axes2D[1].view.getViewBox().xInverted()) ) 
-            self.axes2D[2].view.getViewBox().invertY( not(self.axes2D[2].view.getViewBox().yInverted()) ) 
-        elif (axisToFlip==1):
-            self.axes2D[0].view.getViewBox().invertX( not(self.axes2D[0].view.getViewBox().xInverted()) ) 
-            self.axes2D[2].view.getViewBox().invertX( not(self.axes2D[2].view.getViewBox().xInverted()) ) 
-        elif (axisToFlip==2):
-            self.axes2D[0].view.getViewBox().invertY( not(self.axes2D[0].view.getViewBox().yInverted()) ) 
-            self.axes2D[1].view.getViewBox().invertY( not(self.axes2D[1].view.getViewBox().yInverted()) ) 
+        if axisToFlip == 0:
+            self.axes2D[1].view.getViewBox().invertX(
+                not (self.axes2D[1].view.getViewBox().xInverted())
+            )
+            self.axes2D[2].view.getViewBox().invertY(
+                not (self.axes2D[2].view.getViewBox().yInverted())
+            )
+        elif axisToFlip == 1:
+            self.axes2D[0].view.getViewBox().invertX(
+                not (self.axes2D[0].view.getViewBox().xInverted())
+            )
+            self.axes2D[2].view.getViewBox().invertX(
+                not (self.axes2D[2].view.getViewBox().xInverted())
+            )
+        elif axisToFlip == 2:
+            self.axes2D[0].view.getViewBox().invertY(
+                not (self.axes2D[0].view.getViewBox().yInverted())
+            )
+            self.axes2D[1].view.getViewBox().invertY(
+                not (self.axes2D[1].view.getViewBox().yInverted())
+            )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Methods that are run during navigation
@@ -1197,7 +1207,9 @@ class Lasagna(QtGui.QMainWindow, lasagna_mainWindow.Ui_lasagna_mainWindow):
         )
         self.intensityHistogram.showGrid(x=True, y=True, alpha=0.33)
 
-        self.intensityHistogram.getPlotItem().ctrl.fftCheck.setEnabled(False) #otherwise it crashes
+        self.intensityHistogram.getPlotItem().ctrl.fftCheck.setEnabled(
+            False
+        )  # otherwise it crashes
         self.intensityHistogram.setLimits(
             yMin=min(y), xMin=min(x), yMax=max(y), xMax=max(x)
         )  # Blocks panning beyond the data values

@@ -1,22 +1,27 @@
 """
 A simple plugin just to change the order of the slices
 """
-from PyQt5 import QtGui
-
 from lasagna.plugins.lasagna_plugin import LasagnaPlugin
-from lasagna.plugins.registration_plugins import reorder_stack_UI
-from lasagna.plugins.registration_plugins import selectstack_UI
+from lasagna.plugins.registration_plugins import (reorder_stack_UI,
+                                                  selectstack_UI)
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QDialog, QWidget
 
 
-class plugin(LasagnaPlugin, QtGui.QWidget, reorder_stack_UI.Ui_reorderStack):  # must inherit LasagnaPlugin first
-
+class plugin(
+    LasagnaPlugin, QWidget, reorder_stack_UI.Ui_reorderStack
+):  # must inherit LasagnaPlugin first
     def __init__(self, lasagna_serving, parent=None):
-        super(plugin, self).__init__(lasagna_serving)  # This calls the LasagnaPlugin constructor which in turn calls subsequent constructors
+        super(plugin, self).__init__(
+            lasagna_serving
+        )  # This calls the LasagnaPlugin constructor which in turn calls subsequent constructors
 
         # re-define some default properties that were originally defined in LasagnaPlugin
-        self.pluginShortName = 'Reorder stack'  # Appears on the menu
-        self.pluginLongName = 'manually reorder a stack'  # Can be used for other purposes (e.g. tool-tip)
-        self.pluginAuthor = 'Antonin Blot'
+        self.pluginShortName = "Reorder stack"  # Appears on the menu
+        self.pluginLongName = (
+            "manually reorder a stack"  # Can be used for other purposes (e.g. tool-tip)
+        )
+        self.pluginAuthor = "Antonin Blot"
 
         # Create widgets defined in the designer file
         self.setupUi(self)
@@ -38,40 +43,39 @@ class plugin(LasagnaPlugin, QtGui.QWidget, reorder_stack_UI.Ui_reorderStack):  #
         stk = self.lasagna.returnIngredientByName(self.stack_name)
         nslices = stk._data.shape[0]
         for i in range(nslices):
-            self.listWidget.addItem('slice %i'%i)
+            self.listWidget.addItem("slice %i" % i)
 
     def move_up(self):
-        """moves selected slices up
-        """
+        """moves selected slices up"""
 
         indice = [i.row() for i in self.listWidget.selectedIndexes()]
         if not len(indice):
-            print('Select a slice to move it')
+            print("Select a slice to move it")
             return
         elif len(indice) != 1:
-            raise IOError('Should not accept multiple selection. Change UI')
+            raise IOError("Should not accept multiple selection. Change UI")
         indice = indice[0]
         if indice == 0:
-            print('already first')
+            print("already first")
             return
         item = self.listWidget.takeItem(indice)
-        self.listWidget.insertItem(indice-1, item)
-        self.listWidget.setCurrentRow(indice-1)
+        self.listWidget.insertItem(indice - 1, item)
+        self.listWidget.setCurrentRow(indice - 1)
 
     def move_down(self):
         indice = [i.row() for i in self.listWidget.selectedIndexes()]
         if not len(indice):
-            print('Select a slice to move it')
+            print("Select a slice to move it")
             return
         elif len(indice) != 1:
-            raise IOError('Should not accept multiple selection. Change UI')
+            raise IOError("Should not accept multiple selection. Change UI")
         indice = indice[0]
-        if indice == self.listWidget.count()-1:
-            print('already last')
+        if indice == self.listWidget.count() - 1:
+            print("already last")
             return
         item = self.listWidget.takeItem(indice)
-        self.listWidget.insertItem(indice+1, item)
-        self.listWidget.setCurrentRow(indice+1)
+        self.listWidget.insertItem(indice + 1, item)
+        self.listWidget.setCurrentRow(indice + 1)
 
     def update_plot(self, current=None, previous=None):
         """Update the drawn slice
@@ -95,24 +99,27 @@ class plugin(LasagnaPlugin, QtGui.QWidget, reorder_stack_UI.Ui_reorderStack):  #
             item = current
 
         for axis in self.lasagna.axes2D:
-            axis.updatePlotItems_2D(self.lasagna.ingredientList,
-                                    sliceToPlot=int(item.text().split(' ')[1]))
+            axis.updatePlotItems_2D(
+                self.lasagna.ingredientList, sliceToPlot=int(item.text().split(" ")[1])
+            )
 
     def doit(self):
-        stk_list = [st.objectName for st in self.lasagna.returnIngredientByType('imagestack')]
+        stk_list = [
+            st.objectName for st in self.lasagna.returnIngredientByType("imagestack")
+        ]
         dlg = SelectStack(self, stk_list)
         results = dlg.exec_()
         if not results:
-            print('Cancel')
+            print("Cancel")
             return
         values = dlg.getValues()
 
         if not len(values):
-            print('Nothing selected, do nothing')
+            print("Nothing selected, do nothing")
             return
 
         order = [self.listWidget.item(i) for i in range(self.listWidget.count())]
-        order = [int(l.text().split(' ')[1]) for l in order]
+        order = [int(l.text().split(" ")[1]) for l in order]
         for stck_name in values:
             stk = self.lasagna.returnIngredientByName(str(stck_name))
             stk._data = stk._data[order, :, :]
@@ -132,14 +139,20 @@ class plugin(LasagnaPlugin, QtGui.QWidget, reorder_stack_UI.Ui_reorderStack):  #
         This event is executed when the user presses the close window (cross) button in the title bar
         """
         self.lasagna.stopPlugin(self.__module__)  # This will call self.closePlugin
-        self.lasagna.pluginActions[self.__module__].setChecked(False)  # Uncheck the menu item associated with this plugin's name
+        self.lasagna.pluginActions[self.__module__].setChecked(
+            False
+        )  # Uncheck the menu item associated with this plugin's name
         self.deleteLater()
         event.accept()
 
 
-class SelectStack(QtGui.QDialog, selectstack_UI.Ui_selectStack):  # must inherit LasagnaPlugin first)
+class SelectStack(
+    QDialog, selectstack_UI.Ui_selectStack
+):  # must inherit LasagnaPlugin first)
     def __init__(self, parent=None, stack_list=[]):
-        super(SelectStack, self).__init__(parent)  # This calls the LasagnaPlugin constructor which in turn calls subsequent constructors
+        super(SelectStack, self).__init__(
+            parent
+        )  # This calls the LasagnaPlugin constructor which in turn calls subsequent constructors
         self.setupUi(self)
 
         for st in stack_list:

@@ -1,6 +1,6 @@
-from PyQt5 import QtGui
-
 from lasagna.plugins.lasagna_plugin import LasagnaPlugin
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QAction
 
 
 class IoBasePlugin(LasagnaPlugin):
@@ -8,7 +8,7 @@ class IoBasePlugin(LasagnaPlugin):
         super(IoBasePlugin, self).__init__(lasagna_serving)
         self.lasagna = lasagna_serving
         # Construct the QActions and other stuff required to integrate the load dialog into the menu
-        self.loadAction = QtGui.QAction(self.lasagna)  # Instantiate the menu action
+        self.loadAction = QAction(self.lasagna)  # Instantiate the menu action
 
         self.add_icon()
         self.insert_in_menu()
@@ -19,15 +19,17 @@ class IoBasePlugin(LasagnaPlugin):
 
         :return: QtGui.QPixmap
         """
-        plugin_folder = ':/actions/icons/'  # FIXME: use module to give icon folder
-        return QtGui.QPixmap('{}{}.png'.format(plugin_folder, self.icon_name))
+        plugin_folder = ":/actions/icons/"  # FIXME: use module to give icon folder
+        return QtGui.QPixmap("{}{}.png".format(plugin_folder, self.icon_name))
 
     def add_icon(self):
         """
         Add an icon to the action
         """
         icon_load_overlay = QtGui.QIcon()
-        icon_load_overlay.addPixmap(self.get_icon(), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon_load_overlay.addPixmap(
+            self.get_icon(), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        )
         self.loadAction.setIcon(icon_load_overlay)
 
     def insert_in_menu(self):
@@ -36,8 +38,10 @@ class IoBasePlugin(LasagnaPlugin):
         """
         self.loadAction.setObjectName("fijiPointRead")
         self.lasagna.menuLoad_ingredient.addAction(self.loadAction)
-        self.loadAction.setText(self.objectName.title().replace('_', ' ')[:-2])
+        self.loadAction.setText(self.objectName.title().replace("_", " ")[:-2])
 
-        self.loadAction.triggered.connect(self.showLoadDialog)  # Link the action to the slot
+        self.loadAction.triggered.connect(
+            self.showLoadDialog
+        )  # Link the action to the slot
 
     # def showLoadDialog(self, fname=None):

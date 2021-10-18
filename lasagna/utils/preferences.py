@@ -7,7 +7,6 @@ their own preferences files and still use these functions.
 import os
 
 import yaml
-
 from lasagna.utils.path_utils import getHomeDir, lasagna_plugins_abs_path
 from lasagna.utils.pref_utils import get_lasagna_pref_file
 
@@ -20,29 +19,45 @@ def defaultPreferences():
     """
 
     return {
-            'lastLoadDir': getHomeDir(),           # The directory from which we last loaded data
-            'numRecentFiles': 5,                   # The number of recently loaded file names to store
-            'recentlyLoadedFiles': [],             # A list containing the last "numRecentFiles" file names
-            # All paths must be absolute:
-            'IO_modulePaths': [], # Core loaders defined in lasagna_object constructor
-            'pluginPaths': [lasagna_plugins_abs_path() + 'tutorial_plugins',
-                            lasagna_plugins_abs_path() + 'annotation_plugins',
-                            lasagna_plugins_abs_path() + 'registration_plugins',
-                            lasagna_plugins_abs_path() + 'ara'],  # must be asbolute paths
-            'defaultAxisRatios': [1, 1, 1],         # The default axis ratios
-            'defaultPointZSpread': [5, 5, 3],         # The range of layers over which points or lines are visible
-            'showCrossHairs': True,                 # Whether or not to show the cross hairs
-            'colorOrder': ['red', 'green', 'blue', 'magenta', 'cyan', 'yellow', 'gray'],  # The order in which colors appear by default (see imagestack class)
-            'symbolOrder': ['o', 's', 't', 'd', '+'],
-            'defaultLineWidth': 2,
-            'defaultSymbolOpacity': 200,
-            'defaultSymbolSize': 8,
-            'hideZoomResetButtonOnImageAxes': True,
-            'hideAxes': True,
-            }
+        "lastLoadDir": getHomeDir(),  # The directory from which we last loaded data
+        "numRecentFiles": 5,  # The number of recently loaded file names to store
+        "recentlyLoadedFiles": [],  # A list containing the last "numRecentFiles" file names
+        # All paths must be absolute:
+        "IO_modulePaths": [],  # Core loaders defined in lasagna_object constructor
+        "pluginPaths": [
+            lasagna_plugins_abs_path() + "tutorial_plugins",
+            lasagna_plugins_abs_path() + "annotation_plugins",
+            lasagna_plugins_abs_path() + "registration_plugins",
+            lasagna_plugins_abs_path() + "ara",
+        ],  # must be asbolute paths
+        "defaultAxisRatios": [1, 1, 1],  # The default axis ratios
+        "defaultPointZSpread": [
+            5,
+            5,
+            3,
+        ],  # The range of layers over which points or lines are visible
+        "showCrossHairs": True,  # Whether or not to show the cross hairs
+        "colorOrder": [
+            "red",
+            "green",
+            "blue",
+            "magenta",
+            "cyan",
+            "yellow",
+            "gray",
+        ],  # The order in which colors appear by default (see imagestack class)
+        "symbolOrder": ["o", "s", "t", "d", "+"],
+        "defaultLineWidth": 2,
+        "defaultSymbolOpacity": 200,
+        "defaultSymbolSize": 8,
+        "hideZoomResetButtonOnImageAxes": True,
+        "hideAxes": True,
+    }
 
 
-def loadAllPreferences(prefFName=get_lasagna_pref_file(), defaultPref=defaultPreferences()):
+def loadAllPreferences(
+    prefFName=get_lasagna_pref_file(), defaultPref=defaultPreferences()
+):
     """
     Load the preferences YAML file. If the file is missing, we create it using the default
     preferences defined above. Preferences are returned as a dictionary.
@@ -55,11 +70,15 @@ def loadAllPreferences(prefFName=get_lasagna_pref_file(), defaultPref=defaultPre
         print("Created default preferences file in " + prefFName)
 
     # Load preferences YAML file as a dictionary
-    with open(prefFName, 'r') as stream:
-        return yaml.load(stream)
+    with open(prefFName, "r") as stream:
+        return yaml.load(stream, Loader=yaml.SafeLoader)
 
 
-def readPreference(preferenceName, prefFName=get_lasagna_pref_file(), preferences=get_lasagna_pref_file()):
+def readPreference(
+    preferenceName,
+    prefFName=get_lasagna_pref_file(),
+    preferences=get_lasagna_pref_file(),
+):
     """
     Read preferences with key "preferenceName" from YAML file prefFName on disk.
     If the key is abstent, call defaultPreferences and search for the key. If it
@@ -75,7 +94,10 @@ def readPreference(preferenceName, prefFName=get_lasagna_pref_file(), preference
     if preferenceName in preferences:
         return preferences[preferenceName]
     else:
-        print("Did not find preference %s on disk. Looking in defaultPreferencesa" % preferenceName)
+        print(
+            "Did not find preference %s on disk. Looking in defaultPreferencesa"
+            % preferenceName
+        )
 
     # Check in default preferences and to file and return if so
     preferences = defaultPreferences()
@@ -95,7 +117,7 @@ def writeAllPreferences(preferences, prefFName=get_lasagna_pref_file()):
     assert isinstance(preferences, dict)
 
     # TODO: check ability to write to the file before proceeding
-    with open(prefFName, 'w') as stream:
+    with open(prefFName, "w") as stream:
         yaml.dump(preferences, stream)
 
 

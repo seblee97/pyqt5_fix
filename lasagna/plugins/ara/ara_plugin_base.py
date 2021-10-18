@@ -1,23 +1,26 @@
 import os
 
-from PyQt5 import QtGui
-
 from lasagna.alert import alert
 from lasagna.plugins.ara.ara_plotter import ARA_plotter
 from lasagna.plugins.lasagna_plugin import LasagnaPlugin
-
-from lasagna.utils.pref_utils import get_lasagna_pref_dir
 from lasagna.utils import preferences
+from lasagna.utils.pref_utils import get_lasagna_pref_dir
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QWidget
 
 
-class AraPluginBase(ARA_plotter, LasagnaPlugin, QtGui.QWidget):
+class AraPluginBase(ARA_plotter, LasagnaPlugin, QWidget):
     def __init__(self, lasagna_serving):
         super(AraPluginBase, self).__init__(lasagna_serving)
         self.lasagna = lasagna_serving
 
         # Read file locations from preferences file (creating a default file if none exists)
-        self.pref_file = get_lasagna_pref_dir() + 'ARA_plugin_prefs.yml'  # FIXME: should be in prefs module
-        self.prefs = preferences.loadAllPreferences(prefFName=self.pref_file, defaultPref=self.defaultPrefs())  # FIXME: should be in prefs module
+        self.pref_file = (
+            get_lasagna_pref_dir() + "ARA_plugin_prefs.yml"
+        )  # FIXME: should be in prefs module
+        self.prefs = preferences.loadAllPreferences(
+            prefFName=self.pref_file, defaultPref=self.defaultPrefs()
+        )  # FIXME: should be in prefs module
 
         # The last value the mouse hovered over. When this changes, we re-calculate the contour
         self.lastValue = -1
@@ -26,25 +29,27 @@ class AraPluginBase(ARA_plotter, LasagnaPlugin, QtGui.QWidget):
         self.rootNode = 8
 
         # Warn and quit if there are no paths
-        if not self.prefs['ara_paths']:
+        if not self.prefs["ara_paths"]:
             self.warnAndQuit(self.get_missing_ara_paths_in_prefs_warning())
             return
 
         # Set up the UI
         self.setupUi(self)
         self.show()
-        self.statusBarName_checkBox.setChecked(self.prefs['enableNameInStatusBar'])
-        self.highlightArea_checkBox.setChecked(self.prefs['enableOverlay'])
+        self.statusBarName_checkBox.setChecked(self.prefs["enableNameInStatusBar"])
+        self.highlightArea_checkBox.setChecked(self.prefs["enableOverlay"])
 
         self.link_slots()
 
         self.paths = self._get_ara_paths()
-        if not self.paths:  # If we have no paths to ARAs by the end of this, issue an error alertbox and quit
+        if (
+            not self.paths
+        ):  # If we have no paths to ARAs by the end of this, issue an error alertbox and quit
             self.warnAndQuit(self.get_invalid_ara_paths_in_prefs_warning())
             return
 
         if self.clear_stacks:
-            self.lasagna.removeIngredientByType('imagestack')  # remove all image stacks
+            self.lasagna.removeIngredientByType("imagestack")  # remove all image stacks
 
         self.data = self._get_data_structure()
 
@@ -79,30 +84,34 @@ class AraPluginBase(ARA_plotter, LasagnaPlugin, QtGui.QWidget):
         pass
 
     def _get_repo_url(self):
-        return 'http://raacampbell.github.io/lasagna/ara_explorer_plugin.html'
+        return "http://raacampbell.github.io/lasagna/ara_explorer_plugin.html"
 
     def get_missing_ara_paths_in_prefs_warning(self):
-        return 'Please fill in preferences file at<br>{0}<br><a href="{1}">{1}</a>'\
-            .format(self.pref_file, self._get_repo_url())
+        return (
+            'Please fill in preferences file at<br>{0}<br><a href="{1}">{1}</a>'.format(
+                self.pref_file, self._get_repo_url()
+            )
+        )
 
     def get_invalid_ara_paths_in_prefs_warning(self):
-        return 'Found no valid paths in preferences file at<br>{}.<br>SEE <a href="{1}">{1}</a>'\
-            .format(self.pref_file, self._get_repo_url())
+        return 'Found no valid paths in preferences file at<br>{}.<br>SEE <a href="{1}">{1}</a>'.format(
+            self.pref_file, self._get_repo_url()
+        )
 
-    def _get_ara_files(self, candidate_files, file_type, prefix, suffix=''):
+    def _get_ara_files(self, candidate_files, file_type, prefix, suffix=""):
         for file_name in candidate_files:
             if file_name.startswith(prefix):
                 if suffix and file_name.endswith(suffix):
                     continue
-                print('Adding {} file {}'.format(file_type, file_name))
+                print("Adding {} file {}".format(file_type, file_name))
                 return file_name
-        return ''
+        return ""
 
     def _get_ara_paths(self):
         # Loop through all paths and add to combobox.
         ara_paths = {}
         n = 1
-        for candidate_ara_folder in self.prefs['ara_paths']:
+        for candidate_ara_folder in self.prefs["ara_paths"]:
             if not os.path.exists(candidate_ara_folder):
                 print("{} does not exist. skipping".format(candidate_ara_folder))
                 continue
@@ -111,28 +120,34 @@ class AraPluginBase(ARA_plotter, LasagnaPlugin, QtGui.QWidget):
                 print("No files in {}. skipping".format(candidate_ara_folder))
                 continue
 
-            pths = dict(atlas='', labels='')
-            print("\n %d. Looking for files in directory %s" % (n, candidate_ara_folder))
+            pths = dict(atlas="", labels="")
+            print(
+                "\n %d. Looking for files in directory %s" % (n, candidate_ara_folder)
+            )
             n += 1
 
             files = os.listdir(candidate_ara_folder)
-            atlas_path = self._get_ara_files(files, 'atlas', self.atlasFileName, suffix='raw')
+            atlas_path = self._get_ara_files(
+                files, "atlas", self.atlasFileName, suffix="raw"
+            )
             if not atlas_path:
-                print('Skipping empty paths entry')
+                print("Skipping empty paths entry")
                 continue
             else:
-                pths['atlas'] = os.path.join(candidate_ara_folder, atlas_path)
+                pths["atlas"] = os.path.join(candidate_ara_folder, atlas_path)
 
-            labels_file = self._get_ara_files(files, 'labels', self.labelsFileName)
+            labels_file = self._get_ara_files(files, "labels", self.labelsFileName)
             if not labels_file:
-                print('Skipping empty paths entry')
+                print("Skipping empty paths entry")
                 continue
             else:
-                pths['labels'] = os.path.join(candidate_ara_folder, labels_file)
+                pths["labels"] = os.path.join(candidate_ara_folder, labels_file)
 
-            if hasattr(self, 'templateFileName'):
-                template_file = self._get_ara_files(files, 'template', self.templateFileName, suffix='raw')
-                pths['template'] = os.path.join(candidate_ara_folder, template_file)
+            if hasattr(self, "templateFileName"):
+                template_file = self._get_ara_files(
+                    files, "template", self.templateFileName, suffix="raw"
+                )
+                pths["template"] = os.path.join(candidate_ara_folder, template_file)
 
             # If we're here, this entry should at least have a valid atlas file and a valid labels file
             # We will index the ara_paths dictionary by the name of the atlas file as this is also
@@ -141,7 +156,11 @@ class AraPluginBase(ARA_plotter, LasagnaPlugin, QtGui.QWidget):
 
             # skip if a file with this name already exists
             if atlas_dir_name in ara_paths:
-                print("Skipping as a directory called {} is already in the list".format(atlas_dir_name))
+                print(
+                    "Skipping as a directory called {} is already in the list".format(
+                        atlas_dir_name
+                    )
+                )
             else:
                 # Add this ARA to the paths dictionary and to the combobox
                 ara_paths[atlas_dir_name] = pths
@@ -158,12 +177,16 @@ class AraPluginBase(ARA_plotter, LasagnaPlugin, QtGui.QWidget):
         as the user mouses over the images
         """
         # Get the atlas volume and find in which voxel the mouse cursor is located
-        atlas_layer_name, image_stack = self.get_atlas_image_stack('hook_updateStatusBar_End')
+        atlas_layer_name, image_stack = self.get_atlas_image_stack(
+            "hook_updateStatusBar_End"
+        )
         if image_stack is None:
             return
 
         # Inherited from ARA_plotter
-        value = self.writeAreaNameInStatusBar(image_stack, self.statusBarName_checkBox.isChecked())
+        value = self.writeAreaNameInStatusBar(
+            image_stack, self.statusBarName_checkBox.isChecked()
+        )
 
         # Highlight the brain area we are mousing over by drawing a boundary around it
         if self.lastValue != value and self.highlightArea_checkBox.isChecked():
@@ -175,12 +198,14 @@ class AraPluginBase(ARA_plotter, LasagnaPlugin, QtGui.QWidget):
         triggers closing of the plugin if it is removed.
         """
         # is the current loaded atlas present
-        atlas_name = self.data['currentlyLoadedAtlasName']
+        atlas_name = self.data["currentlyLoadedAtlasName"]
         if not self.lasagna.returnIngredientByName(atlas_name):
-            print("The current atlas has been removed by the user. Closing the ARA explorer plugin")
+            print(
+                "The current atlas has been removed by the user. Closing the ARA explorer plugin"
+            )
             self.closePlugin()
 
-# ----------------------------
+    # ----------------------------
     # Methods to handle close events and errors
     def deregister_from_lasagna(self):
         self.lasagna.stopPlugin(self.__module__)  # This will call self.closePlugin
@@ -193,13 +218,13 @@ class AraPluginBase(ARA_plotter, LasagnaPlugin, QtGui.QWidget):
         when the user loads a new image stack
         """
         # remove the currently loaded ARA (if present)
-        self.lasagna.removeIngredientByName('aracontour')
+        self.lasagna.removeIngredientByName("aracontour")
 
-        if self.data['currentlyLoadedAtlasName']:
-            self.lasagna.removeIngredientByName(self.data['currentlyLoadedAtlasName'])
+        if self.data["currentlyLoadedAtlasName"]:
+            self.lasagna.removeIngredientByName(self.data["currentlyLoadedAtlasName"])
 
-        if self.data['currentlyLoadedOverlay']:
-            self.lasagna.removeIngredientByName(self.data['currentlyLoadedOverlay'])
+        if self.data["currentlyLoadedOverlay"]:
+            self.lasagna.removeIngredientByName(self.data["currentlyLoadedOverlay"])
 
         # self.lasagna.intensityHistogram.clear()
         self.detachHooks()

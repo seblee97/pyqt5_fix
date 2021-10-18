@@ -4,16 +4,15 @@ On this graph we plot an x-axis cross-section of the image at the level which th
 mouse cursor is at. 
 """
 
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import qApp
-
 from lasagna.plugins.lasagna_plugin import LasagnaPlugin
 from lasagna.plugins.tutorial_plugins import cross_section_plot_UI
 from lasagna.utils import lasagna_qt_helper_functions
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QWidget, qApp
 
 
 class plugin(
-    LasagnaPlugin, QtGui.QWidget, cross_section_plot_UI.Ui_xSection
+    LasagnaPlugin, QWidget, cross_section_plot_UI.Ui_xSection
 ):  # must inherit LasagnaPlugin first
     def __init__(self, lasagna_serving, parent=None):
         super(plugin, self).__init__(
@@ -22,9 +21,7 @@ class plugin(
 
         # re-define some default properties that were originally defined in LasagnaPlugin
         self.pluginShortName = "Cross Section"  # Appears on the menu
-        self.pluginLongName = (
-            "displays cross section in a new window"
-        )  # Can be used for other purposes (e.g. tool-tip)
+        self.pluginLongName = "displays cross section in a new window"  # Can be used for other purposes (e.g. tool-tip)
         self.pluginAuthor = "Rob Campbell"
 
         # Create widgets defined in the designer file
@@ -54,11 +51,12 @@ class plugin(
 
         plot_widget = qApp.widgetAt(pos).parent()  # The mouse is in this widget
 
-
         # Get the base image from this widget
         selected_stack_name = self.lasagna.selectedStackName()
-        image_item = lasagna_qt_helper_functions.find_pyqt_graph_object_name_in_plot_widget(
-            plot_widget, itemName=selected_stack_name, regex=True
+        image_item = (
+            lasagna_qt_helper_functions.find_pyqt_graph_object_name_in_plot_widget(
+                plot_widget, itemName=selected_stack_name, regex=True
+            )
         )
         if not image_item:
             return

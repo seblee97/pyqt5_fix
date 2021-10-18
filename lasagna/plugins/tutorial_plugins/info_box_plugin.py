@@ -6,28 +6,26 @@ This information is then displayed on the screen.
 """
 
 
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import qApp
-
 from lasagna.plugins.lasagna_plugin import LasagnaPlugin
+from lasagna.plugins.tutorial_plugins import infoBox_UI
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QWidget, qApp
+
 
 """
 Creates a plugin that is a new window containing dynamically updating information about the state of the main Lasagna GUI.
 """
 
-from lasagna.plugins.tutorial_plugins import infoBox_UI
 
 # Must be a class called "plugin" and must inherit LasagnaPlugin first
-class plugin(LasagnaPlugin, QtGui.QWidget, infoBox_UI.Ui_infoBox):
+class plugin(LasagnaPlugin, QWidget, infoBox_UI.Ui_infoBox):
     def __init__(self, lasagna_serving, parent=None):
         # The following calls the LasagnaPlugin constructor which in turn calls subsequent constructors
         super(plugin, self).__init__(lasagna_serving)
 
         # re-define some default properties that were originally defined in LasagnaPlugin
         self.pluginShortName = "Info Box"  # Appears on the menu
-        self.pluginLongName = (
-            "displays image info in a new window"
-        )  # Can be used for other purposes (e.g. tool-tip)
+        self.pluginLongName = "displays image info in a new window"  # Can be used for other purposes (e.g. tool-tip)
         self.pluginAuthor = "Rob Campbell"
 
         # Create widgets defined in the designer file

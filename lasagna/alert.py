@@ -1,4 +1,3 @@
-
 """
 Brings up an alert message to warn the user when something significant has happened. 
 We can't rely on the user watching the console for messages. 
@@ -9,10 +8,10 @@ We can't rely on the user watching the console for messages.
 
 from lasagna import alert_UI
 from PyQt5 import QtGui
+from PyQt5.QtWidgets import QWidget
 
 
-class alert(alert_UI.Ui_alertBox, QtGui.QWidget):
-
+class alert(alert_UI.Ui_alertBox, QWidget):
     def __init__(self, lasagna_serving, alertText="Alert!"):
         super(alert, self).__init__()
 
@@ -29,15 +28,17 @@ class alert(alert_UI.Ui_alertBox, QtGui.QWidget):
         self.closeButton.released.connect(self.closeAlertBox)
 
     def closeAlertBox(self):
-        self.close()    
+        self.close()
 
     def center(self):
         """
-        Centre window on screen 
+        Centre window on screen
         http://stackoverflow.com/questions/20243637/pyqt4-center-window-on-active-screen
         """
         frame_gm = self.frameGeometry()
-        screen = self.lasagna.app.desktop().screenNumber(self.lasagna.app.desktop().cursor().pos())
+        screen = self.lasagna.app.desktop().screenNumber(
+            self.lasagna.app.desktop().cursor().pos()
+        )
         center_point = self.lasagna.app.desktop().screenGeometry(screen).center()
         frame_gm.moveCenter(center_point)
         self.move(frame_gm.topLeft())
